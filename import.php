@@ -12,7 +12,7 @@ if (($handle = fopen("abstracts18.csv", "r")) !== FALSE) {
             // let's figure out the column headers
             for ($c=0; $c < $num; $c++) {
                 $headers[] = trim($data[$c]);
-            }            
+            }   
         } else {
             // let's put all the data into the next record
             $sub = [];
@@ -37,6 +37,7 @@ foreach ($newdata as $r) {
 fclose($fp);
 
 function processSub($sub) {
+    print_r($sub);
     $s = [];
     $presenter = strtoupper($sub['pfirst'] . ' ' . $sub['plast']);
     $section1 = str_replace("\t", " ", $sub['section']);
@@ -77,7 +78,6 @@ function processAuthors($sub, $presenter) {
     }
         
     // now process authors from other institutions
-    echo count($authors);
     for($i=1; $i<count($authors); $i++) {
         $inst = $authors[$i];
         $insta = $inst[1];
