@@ -28,6 +28,7 @@ if (($handle = fopen("abstracts18.csv", "r")) !== FALSE) {
 echo count($alldata) . ' records read.<br />';
 foreach ($alldata as $sub) {
     $newdata[] = processSub($sub);
+    print_r(end($newdata));
 }
 echo count($newdata) . ' records processed.<br />';
 $fp = fopen('processed18.csv', 'w');
@@ -37,14 +38,13 @@ foreach ($newdata as $r) {
 fclose($fp);
 
 function processSub($sub) {
-    print_r($sub);
     $s = [];
     $presenter = strtoupper($sub['pfirst'] . ' ' . $sub['plast']);
     $section1 = str_replace("\t", " ", $sub['section']);
     $section = str_replace(". ", ".", $section1);
     $title = strtoupper($sub['title']);
     $authorstr = processAuthors($sub, $presenter);
-    $abstract = $sub['abstract'];
+    $abstract = processAbstract($sub['abstract'],$sub['italics']);
     return [$section, $sub['type'], $title, $presenter, $authorstr, $abstract];
 }
 
@@ -72,9 +72,9 @@ function processAuthors($sub, $presenter) {
     } else {        
         array_shift($insta); // get rid of presenter since already included
         $last = array_pop($insta); // pop the last one, we will manually add it
-        $instastr = implode(',',$insta);
+        $instastr = implode(', ',$insta);
         $instastr .= ' AND ' . $last;
-        $authorstr .= ", $instastr, {$inst[0]}";
+        $authorstr .= ", $instastr, {$inst[0]}.";
     }
         
     // now process authors from other institutions
@@ -107,7 +107,12 @@ function addAuthor($author, $coauthorinst, &$authors) {
     
     // First|Last|Inst
     $parts = explode('|',$author);
-    $name = strtoupper($parts[0] . ' ' . $parts[1]);
+    $first = trim(strtoupper($parts[0]));
+    $last = trim(strtoupper($parts[1]));
+    if (!$first && !$last) {
+        return; // oops looks like coauthor wasn't really added
+    }
+    $name = "$first $last";
     $inst = isset($parts[2])&&$parts[2]?$parts[2]:$coauthorinst;
     if (!$inst) {
         $inst = 'N/A';
@@ -123,6 +128,21 @@ function addAuthor($author, $coauthorinst, &$authors) {
     
     // didn't find it, time to create new array and populate it with just this author
     $authors[] = [$inst,[$name]];
+}
+
+function processAbstract($abstract, $italics) {
+    $italics = trim($italics);
+    $abstract = trim($abstract);
+    if (!$italics) {
+        return $abstract;
+    }
+    // look for each keyword
+    $keywords = explode(',', $italics);
+    foreach ($keywords as $k) {
+        $key = trim($k);
+        $abstract = str_replace($key, "<em>$key</em>", $abstract);
+    }
+    return $abstract;
 }
 
 ?>
